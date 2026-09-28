@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bunksite</title>
+<!-- BunkBot is the AI assistant persona used throughout this app -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f6fa; --panel:#ffffff; --side:#eef0f7; --text:#1b1d29; --muted:#6b7080;
+  --line:#e2e4ee; --accent:#5b5bf0; --accent2:#2fb789; --warn:#e0a30a; --danger:#e0475b;
+  --font-ui: system-ui, -apple-system, "Inter", sans-serif;
+  box-sizing:border-box;
+  padding-top: env(safe-area-inset-top,0px); padding-bottom: env(safe-area-inset-bottom,0px);
+}
+:root:not([data-theme="light"]){ }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15161f; --panel:#1c1e2a; --side:#12131b; --text:#eceefb; --muted:#9195ab;
+    --line:#2a2c3b; --accent:#7c7cff; --accent2:#3fd6a3; --warn:#f0b429; --danger:#ff5f74;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15161f; --panel:#1c1e2a; --side:#12131b; --text:#eceefb; --muted:#9195ab;
+  --line:#2a2c3b; --accent:#7c7cff; --accent2:#3fd6a3; --warn:#f0b429; --danger:#ff5f74;
+}
+*{margin:0;box-sizing:border-box;font-family:var(--font-ui)}
+html,body{height:100%;background:var(--bg);color:var(--text)}
+h1,h2,h3{font-family:"Space Grotesk",var(--font-ui);letter-spacing:-0.01em}
+button{cursor:pointer;font:inherit;border:none;background:none;color:inherit}
+input,select{font:inherit;color:var(--text);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px}
+::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+
+/* ---------- Auth screens ---------- */
+#auth{min-height:100%;display:flex;align-items:center;justify-content:center;padding:24px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:32px;width:100%;max-width:420px}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:22px}
+.brand .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-family:"Space Grotesk"}
+.brand span{font-family:"Space Grotesk";font-weight:700;font-size:1.2rem}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:5px}
+.field input,.field select{width:100%}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{width:100%;padding:11px;border-radius:9px;background:var(--accent);color:#fff;font-weight:600;margin-top:6px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.linklike{color:var(--accent);cursor:pointer;font-size:.85rem}
+.err{color:var(--danger);font-size:.82rem;min-height:1.1em;margin:4px 0}
+.hint{font-size:.76rem;color:var(--muted);margin-top:14px;line-height:1.5}
+
+/* ---------- App shell ---------- */
+#app{display:none;height:100%;grid-template-columns:230px 1fr}
+#app.on{display:grid}
+#sidebar{background:var(--side);padding:18px 12px;display:flex;flex-direction:column;gap:4px;border-right:1px solid var(--line)}
+#sidebar .brand{padding:6px 8px 18px}
+.nav-btn{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;color:var(--muted);font-weight:500;font-size:.92rem;text-align:left}
+.nav-btn:hover{background:var(--panel)}
+.nav-btn.active{background:var(--accent);color:#fff}
+#sidebar .spacer{flex:1}
+.user-chip{display:flex;align-items:center;gap:9px;padding:9px;border-radius:9px;border:1px solid var(--line)}
+.avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:.8rem;flex-shrink:0}
+#main{overflow-y:auto;padding:26px 32px}
+.pane{display:none}.pane.on{display:block}
+.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px;flex-wrap:wrap;gap:8px}
+.top h2{font-size:1.4rem}
+.top .sub{color:var(--muted);font-size:.85rem}
+
+/* dashboard grid */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.stat .n{font-family:"Space Grotesk";font-size:1.7rem;font-weight:700}
+.stat .l{color:var(--muted);font-size:.78rem;margin-top:2px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:18px}
+.panel h3{font-size:1rem;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)}
+th{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.03em}
+.badge{padding:3px 8px;border-radius:6px;font-size:.74rem;font-weight:600;display:inline-block}
+.b-ok{background:rgba(47,183,137,.15);color:var(--accent2)}
+.b-warn{background:rgba(224,163,10,.18);color:var(--warn)}
+.b-danger{background:rgba(224,71,91,.18);color:var(--danger)}
+.pill-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.pill-btn{padding:7px 13px;border-radius:20px;border:1px solid var(--line);font-size:.82rem;font-weight:500}
+.pill-btn.p{background:var(--accent2);color:#fff;border-color:var(--accent2)}
+.pill-btn.a{background:var(--danger);color:#fff;border-color:var(--danger)}
+.pill-btn.o{background:var(--warn);color:#1b1d29;border-color:var(--warn)}
+.day-schedule{display:flex;flex-direction:column;gap:8px}
+.period-row{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;border:1px solid var(--line);border-radius:9px}
+.period-row .pname{font-weight:600;font-size:.9rem}
+.period-row .ptime{color:var(--muted);font-size:.76rem}
+canvas{max-width:100%}
+#alerts{display:flex;flex-direction:column;gap:8px;margin-bottom:18px}
+.alert{padding:11px 14px;border-radius:10px;font-size:.85rem;display:flex;gap:9px;align-items:flex-start}
+.alert.danger{background:rgba(224,71,91,.13);border:1px solid var(--danger);color:var(--danger)}
+.alert.warn{background:rgba(224,163,10,.15);border:1px solid var(--warn);color:var(--warn)}
+.alert.info{background:rgba(91,91,240,.1);border:1px solid var(--accent);color:var(--accent)}
+.tabs{display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--line)}
+.tab{padding:9px 4px;color:var(--muted);font-weight:600;font-size:.88rem;border-bottom:2px solid transparent;margin-right:16px}
+.tab.active{color:var(--text);border-color:var(--accent)}
+.subpane{display:none}.subpane.on{display:block}
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0}
+.faq-item summary{cursor:pointer;font-weight:600;font-size:.92rem}
+.faq-item p{color:var(--muted);font-size:.85rem;margin-top:8px;line-height:1.5}
+.small-muted{color:var(--muted);font-size:.8rem}
+.stub{border:1px dashed var(--line);border-radius:10px;padding:14px;color:var(--muted);font-size:.83rem;line-height:1.5}
+.themeopts{display:flex;gap:8px}
+.themeopts button{padding:8px 14px;border:1px solid var(--line);border-radius:8px;font-size:.85rem}
+.themeopts button.sel{border-color:var(--accent);color:var(--accent);font-weight:600}
+.upload-box{border:1px dashed var(--line);border-radius:10px;padding:14px;font-size:.85rem}
+.upload-box textarea{width:100%;min-height:90px;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;color:var(--text);font-size:.8rem;margin-top:8px}
+
+/* AI chat */
+#aiFab{position:fixed;bottom:22px;right:22px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(0,0,0,.25);z-index:50}
+#aiFab svg{width:26px;height:26px}
+#aiPanel{position:fixed;bottom:90px;right:22px;width:340px;max-width:92vw;height:460px;max-height:70vh;background:var(--panel);border:1px solid var(--line);border-radius:16px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.3);z-index:50}
+#aiPanel.on{display:flex}
+.ai-head{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:600}
+#aiLog{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.msg{max-width:85%;padding:9px 12px;border-radius:12px;font-size:.85rem;line-height:1.4}
+.msg.bot{background:var(--side);align-self:flex-start;border:1px solid var(--line)}
+.msg.me{background:var(--accent);color:#fff;align-self:flex-end}
+.ai-input{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}
+.ai-input input{flex:1}
+.ai-input button{background:var(--accent);color:#fff;border-radius:8px;padding:0 14px}
+
+@media (max-width:760px){
+  #app.on{grid-template-columns:1fr}
+  #sidebar{position:fixed;bottom:0;left:0;right:0;top:auto;flex-direction:row;overflow-x:auto;border-right:none;border-top:1px solid var(--line);padding:8px;z-index:40}
+  #sidebar .brand,#sidebar .spacer,#sidebar .user-chip{display:none}
+  .nav-btn span.lbl{display:none}
+  #main{padding-bottom:80px}
+}
+</style>
+</head>
+<body>
+
+<!-- ================= AUTH ================= -->
+<div id="auth">
+  <div class="card" id="authCard">
+    <div class="brand"><div class="mark">B</div><span>Bunksite</span></div>
+    <div id="loginForm">
+      <div class="field"><label>College email</label><input id="li_email" type="email" placeholder="you@srmtrichy.edu.in"></div>
+      <div class="field"><label>Password</label><input id="li_pass" type="password" placeholder="••••••••"></div>
+      <div class="err" id="li_err"></div>
+      <button class="btn" onclick="doLogin()">Log in</button>
+      <button class="btn ghost" onclick="showForgot()">Forgot password?</button>
+      <p class="hint">No account? <span class="linklike" onclick="showSignup()">Create one</span></p>
+    </div>
+    <div id="signupForm" style="display:none">
+      <div class="field"><label>University</label><input id="su_uni" placeholder="Search e.g. SRM Institute of Science and Technology" list="uniList"><datalist id="uniList"><option value="SRM Institute of Science and Technology"><option value="Anna University"><option value="VIT University"><option value="IIT Madras"></datalist></div>
+      <div class="field"><label>College / Campus</label><input id="su_college" placeholder="e.g. SRM Trichy" list="collList"><datalist id="collList"><option value="SRM Trichy"><option value="SRM Kattankulathur"><option value="SRM Ramapuram"></datalist></div>
+      <div class="row2">
+        <div class="field"><label>Register number</label><input id="su_reg"></div>
+        <div class="field"><label>Full name</label><input id="su_name"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Class / Year</label><select id="su_class"><option>I</option><option>II</option><option>III</option><option>IV</option></select></div>
+        <div class="field"><label>Section</label><input id="su_sec" placeholder="A"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Student net ID</label><input id="su_netid"></div>
+        <div class="field"><label>Net ID password</label><input id="su_netpass" type="password"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Phone number</label><input id="su_phone"></div>
+        <div class="field"><label>Date of birth</label><input id="su_dob" type="date"></div>
+      </div>
+      <div class="field"><label>Display name (what BunkBot calls you)</label><input id="su_display" placeholder="e.g. Blackjack"></div>
+      <div class="row2">
+        <div class="field"><label>Semester start</label><input id="su_start" type="date"></div>
+        <div class="field"><label>Semester end</label><input id="su_end" type="date"></div>
+      </div>
+      <div class="field"><label>Login email</label><input id="su_email" type="email"></div>
+      <div class="field"><label>Login password</label><input id="su_pass" type="password"></div>
+      <div class="err" id="su_err"></div>
+      <button class="btn" onclick="doSignup()">Create account</button>
+      <p class="hint"><span class="linklike" onclick="showLogin()">Back to login</span></p>
+    </div>
+    <div id="forgotForm" style="display:none">
+      <p class="small-muted" style="margin-bottom:12px">Enter your login email — we'll simulate an OTP (in a real deployment this is emailed via a backend mail service).</p>
+      <div class="field"><input id="fg_email" placeholder="Login email"></div>
+      <button class="btn ghost" onclick="sendOtp()">Send OTP</button>
+      <div id="otpBox" style="display:none;margin-top:10px">
+        <div class="field"><label>Enter OTP (demo — shown below)</label><input id="fg_otp"></div>
+        <div class="field"><label>New password</label><input id="fg_newpass" type="password"></div>
+        <button class="btn" onclick="resetPass()">Reset password</button>
+      </div>
+      <div class="err" id="fg_err"></div>
+      <p class="hint"><span class="linklike" onclick="showLogin()">Back to login</span></p>
+    </div>
+    <p class="hint" id="biometricLine"></p>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app">
+  <div id="sidebar">
+    <div class="brand"><div class="mark">B</div><span>Bunksite</span></div>
+    <button class="nav-btn active" data-pane="dash" onclick="goPane('dash')">📊 <span class="lbl">Dashboard</span></button>
+    <button class="nav-btn" data-pane="mark" onclick="goPane('mark')">✅ <span class="lbl">Mark Today</span></button>
+    <button class="nav-btn" data-pane="timetable" onclick="goPane('timetable')">🗓️ <span class="lbl">Timetable</span></button>
+    <button class="nav-btn" data-pane="profile" onclick="goPane('profile')">👤 <span class="lbl">Profile</span></button>
+    <button class="nav-btn" data-pane="settings" onclick="goPane('settings')">⚙️ <span class="lbl">Settings</span></button>
+    <button class="nav-btn" data-pane="help" onclick="goPane('help')">❓ <span class="lbl">Tutorial & FAQ</span></button>
+    <div class="spacer"></div>
+    <div class="user-chip"><div class="avatar" id="miniAv"></div>
+      <div style="overflow:hidden"><div style="font-size:.82rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="miniName"></div>
+      <div class="linklike" style="font-size:.72rem" onclick="logout()">Log out</div></div>
+    </div>
+  </div>
+
+  <div id="main">
+    <!-- DASHBOARD -->
+    <div class="pane on" id="pane-dash">
+      <div class="top"><div><h2>Welcome back</h2><div class="sub" id="dashSub"></div></div></div>
+      <div id="alerts"></div>
+      <div class="stats" id="statCards"></div>
+      <div class="panel">
+        <h3>Attendance health</h3>
+        <canvas id="chart" height="140"></canvas>
+      </div>
+      <div class="panel">
+        <h3>Per-subject status</h3>
+        <table><thead><tr><th>Subject</th><th>Attended</th><th>Total</th><th>%</th><th>Status</th></tr></thead><tbody id="subjTable"></tbody></table>
+      </div>
+    </div>
+
+    <!-- MARK TODAY -->
+    <div class="pane" id="pane-mark">
+      <div class="top"><div><h2>Mark today's attendance</h2><div class="sub" id="markDateLabel"></div></div>
+        <input type="date" id="markDatePick" onchange="renderMark()">
+      </div>
+      <div class="panel">
+        <div class="day-schedule" id="markList"></div>
+      </div>
+    </div>
+
+    <!-- TIMETABLE -->
+    <div class="pane" id="pane-timetable">
+      <div class="top"><div><h2>Timetable</h2><div class="sub">Default: SRM Trichy — I ECE-A (Odd Sem). Remove subjects you don't take, or upload your own if your class isn't listed.</div></div></div>
+      <div class="panel">
+        <table><thead><tr><th>Slot</th><th>Subject</th><th>Periods/wk</th><th>Faculty</th><th></th></tr></thead><tbody id="ttTable"></tbody></table>
+      </div>
+      <div class="panel upload-box">
+        <b>Not your timetable?</b>
+        <p class="small-muted">Add a custom subject (visible only to you) or paste your own weekly schedule.</p>
+        <div class="row2" style="margin-top:10px">
+          <input id="newSubName" placeholder="Subject name">
+          <input id="newSubPerWk" type="number" placeholder="Periods per week" min="1">
+        </div>
+        <button class="btn ghost" style="margin-top:8px" onclick="addSubject()">Add subject</button>
+      </div>
+    </div>
+
+    <!-- PROFILE -->
+    <div class="pane" id="pane-profile">
+      <div class="top"><h2>Profile</h2></div>
+      <div class="tabs">
+        <div class="tab active" data-t="pinfo" onclick="goTab('pinfo')">Details</div>
+        <div class="tab" data-t="pweb" onclick="goTab('pweb')">Website attendance</div>
+        <div class="tab" data-t="pportal" onclick="goTab('pportal')">Student portal</div>
+      </div>
+      <div class="subpane on" id="tab-pinfo">
+        <div class="panel">
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+            <div class="avatar" style="width:54px;height:54px;font-size:1.3rem" id="bigAv"></div>
+            <div><button class="btn ghost" style="width:auto;padding:7px 12px" onclick="alert('Picture upload needs the assets capability — try this in a live claude.ai artifact session.')">Change photo</button></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Full name</label><input id="pf_name"></div>
+            <div class="field"><label>Display name (AI bot)</label><input id="pf_display"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Register number</label><input id="pf_reg"></div>
+            <div class="field"><label>Class / Section</label><input id="pf_classsec"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Student net ID</label><input id="pf_netid"></div>
+            <div class="field"><label>Net ID password</label><input id="pf_netpass" type="password"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Semester start</label><input id="pf_start" type="date"></div>
+            <div class="field"><label>Semester end</label><input id="pf_end" type="date"></div>
+          </div>
+          <div class="field"><label>Confirm your login password to save changes</label><input id="pf_confirm" type="password" placeholder="required for any change"></div>
+          <div class="err" id="pf_err"></div>
+          <button class="btn" style="width:auto;padding:9px 18px" onclick="saveProfile()">Save changes</button>
+          <button class="btn ghost" style="width:auto;padding:9px 18px;color:var(--danger);border-color:var(--danger)" onclick="deleteAccount()">Delete account</button>
+        </div>
+      </div>
+      <div class="subpane" id="tab-pweb">
+        <div class="panel"><p class="small-muted">This is the attendance Bunksite has calculated from what you've marked — same numbers shown on your Dashboard.</p>
+        <table style="margin-top:10px"><thead><tr><th>Subject</th><th>%</th></tr></thead><tbody id="webAttTable"></tbody></table></div>
+      </div>
+      <div class="subpane" id="tab-pportal">
+        <div class="panel">
+          <div class="stub">🔒 <b>Student portal sync (placeholder)</b><br>
+          Using your net ID (<span id="portalNetid"></span>), Bunksite would fetch your official attendance from SRM's student portal here, for comparison only — it never overwrites your own logged numbers. Real portal scraping needs a live backend integration with your institution's system, which isn't available in this prototype.
+          <br><br><i>Simulated preview:</i>
+          <div id="portalSim" style="margin-top:8px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="pane" id="pane-settings">
+      <div class="top"><h2>Settings</h2></div>
+      <div class="panel">
+        <h3>Theme</h3>
+        <div class="themeopts">
+          <button data-th="light" onclick="setTheme('light')">Light</button>
+          <button data-th="dark" onclick="setTheme('dark')">Dark</button>
+          <button data-th="system" onclick="setTheme('system')">System</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Login preference</h3>
+        <div class="themeopts">
+          <button data-lp="password" onclick="setLoginPref('password')">Password</button>
+          <button data-lp="biometric" onclick="setLoginPref('biometric')">Biometric (if supported)</button>
+        </div>
+        <p class="small-muted" style="margin-top:8px" id="bioSupportNote"></p>
+      </div>
+      <div class="panel">
+        <h3>Report a suspicious account</h3>
+        <p class="small-muted" style="margin-bottom:8px">Flags the account for admin review (simulated — no real admin backend here).</p>
+        <input id="reportEmail" placeholder="Account email to report" style="width:60%">
+        <button class="btn ghost" style="width:auto;padding:9px 14px;margin-left:8px" onclick="reportAccount()">Report</button>
+        <p class="small-muted" id="reportMsg"></p>
+      </div>
+    </div>
+
+    <!-- HELP -->
+    <div class="pane" id="pane-help">
+      <div class="top"><h2>Tutorial & FAQ</h2></div>
+      <div class="panel">
+        <h3>Quick start</h3>
+        <ol class="small-muted" style="padding-left:18px;line-height:2">
+          <li>Check your Timetable tab — remove subjects you don't take, or add missing ones.</li>
+          <li>Every day, open Mark Today and tick each period Present / Absent / OD / Medical.</li>
+          <li>Your Dashboard updates instantly — overall %, till-date %, per-subject 75% status.</li>
+          <li>Ask the floating AI button anything, in English or Tanglish.</li>
+        </ol>
+      </div>
+      <details class="faq-item"><summary>How is "till date" % different from overall %?</summary><p>Overall % is attended ÷ total classes for the whole semester so far. Till-date % looks only at the classes that have already happened between the dates you pick.</p></details>
+      <details class="faq-item"><summary>Does OD or Medical leave hurt my attendance?</summary><p>No — OD and Medical-leave periods are excluded from both the attended and total count for that subject, so your percentage is recalculated instantly without penalty.</p></details>
+      <details class="faq-item"><summary>What triggers "Irreversible Detention"?</summary><p>If even attending every single remaining class in a subject can't bring you back to 75%, Bunksite shows this alert for that subject.</p></details>
+      <details class="faq-item"><summary>Is my net ID password sent anywhere?</summary><p>In this prototype, no data leaves your browser — everything is stored locally. A production version would need a secure backend before ever touching real credentials.</p></details>
+    </div>
+  </div>
+</div>
+
+<!-- AI CHAT -->
+<button id="aiFab" title="Ask BunkBot" onclick="toggleAI()"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M8 15c1 1.2 2.4 1.8 4 1.8s3-.6 4-1.8"/></svg></button>
+<div id="aiPanel">
+  <div class="ai-head"><span id="aiName">BunkBot</span><span class="linklike" onclick="toggleAI()">✕</span></div>
+  <div id="aiLog"></div>
+  <div class="ai-input"><input id="aiInput" placeholder="Ask anything… 'enna pandra'" onkeydown="if(event.key==='Enter')sendAI()"><button onclick="sendAI()">Send</button></div>
+</div>
+
+<script>
+/* ---------------- Default SRM Trichy timetable (I ECE-A, odd sem) ---------------- */
+const DEFAULT_SUBJECTS = [
+  {code:'E',name:'Philosophy of Engineering',perWeek:3,faculty:'Dr. R. Aarthi'},
+  {code:'A',name:'Advanced Calculus & Complex Analysis',perWeek:4,faculty:'Dr. R. Ragul'},
+  {code:'B',name:'Chemistry',perWeek:6,faculty:'Dr. P. Pachamuthu'},
+  {code:'C',name:'Electronic System & PCB Design',perWeek:2,faculty:'Dr. U. Shajith Ali'},
+  {code:'D',name:'Programming for Problem Solving',perWeek:5,faculty:'Dr. A. Rama Prasath'},
+  {code:'F',name:'Biology',perWeek:2,faculty:'Dr. M. Jaya Priya'},
+];
+const DEFAULT_WEEK = {
+  Mon:['E','E','B','A'], Tue:['C','B','A','D'], Wed:['B','E','D'],
+  Thu:['A'], Fri:['D','A','C','B']
+};
+
+let DB = JSON.parse(localStorage.getItem('bunksite_db')||'{"users":{}}');
+let session = JSON.parse(sessionStorage.getItem('bunksite_session')||'null');
+function saveDB(){ try{localStorage.setItem('bunksite_db',JSON.stringify(DB));}catch(e){} }
+function hash(s){let h=0;for(let i=0;i<s.length;i++){h=(h*31+s.charCodeAt(i))|0;}return String(h);}
+
+/* ---------------- Auth ---------------- */
+function showSignup(){toggle('signupForm','loginForm','forgotForm');}
+function showLogin(){toggle('loginForm','signupForm','forgotForm');}
+function showForgot(){toggle('forgotForm','loginForm','signupForm');}
+function toggle(show,...hide){document.getElementById(show).style.display='block';hide.forEach(id=>document.getElementById(id).style.display='none');}
+
+function doSignup(){
+  const email = val('su_email').toLowerCase(), pass = val('su_pass');
+  const err=document.getElementById('su_err'); err.textContent='';
+  if(!email||!pass){err.textContent='Login email and password are required.';return;}
+  if(DB.users[email]){err.textContent='An account already exists for this email.';return;}
+  DB.users[email]={
+    email, passHash:hash(pass),
+    uni:val('su_uni'), college:val('su_college'), reg:val('su_reg'), name:val('su_name'),
+    cls:val('su_class'), sec:val('su_sec'), netid:val('su_netid'), netpass:val('su_netpass'),
+    phone:val('su_phone'), dob:val('su_dob'), display:val('su_display')||val('su_name')||'Student',
+    semStart:val('su_start'), semEnd:val('su_end'),
+    theme:'system', loginPref:'password',
+    subjects: JSON.parse(JSON.stringify(DEFAULT_SUBJECTS)),
+    week: JSON.parse(JSON.stringify(DEFAULT_WEEK)),
+    attendance:{}, // date -> {code: 'present'|'absent'|'od'|'medical'}
+    holidays:[]
+  };
+  saveDB();
+  login(email);
+}
+function doLogin(){
+  const email=val('li_email').toLowerCase(), pass=val('li_pass');
+  const err=document.getElementById('li_err'); err.textContent='';
+  const u=DB.users[email];
+  if(!u||u.passHash!==hash(pass)){err.textContent='Incorrect email or password.';return;}
+  login(email);
+}
+let otpCache={};
+function sendOtp(){
+  const email=val('fg_email').toLowerCase();
+  const err=document.getElementById('fg_err'); err.textContent='';
+  if(!DB.users[email]){err.textContent='No account with that email.';return;}
+  const otp=String(Math.floor(100000+Math.random()*900000));
+  otpCache[email]=otp;
+  document.getElementById('otpBox').style.display='block';
+  err.textContent='';
+  document.getElementById('fg_err').innerHTML='Demo OTP (a real build emails this): <b>'+otp+'</b>';
+  document.getElementById('fg_err').style.color='var(--accent2)';
+}
+function resetPass(){
+  const email=val('fg_email').toLowerCase(), otp=val('fg_otp'), np=val('fg_newpass');
+  if(otpCache[email]!==otp){alert('Incorrect OTP.');return;}
+  DB.users[email].passHash=hash(np); saveDB();
+  alert('Password updated. Please log in.'); showLogin();
+}
+function login(email){
+  session={email}; sessionStorage.setItem('bunksite_session',JSON.stringify(session));
+  boot();
+}
+function logout(){ session=null; sessionStorage.removeItem('bunksite_session'); document.getElementById('app').classList.remove('on'); document.getElementById('auth').style.display='flex'; }
+
+function val(id){return document.getElementById(id).value.trim();}
+
+/* biometric hint */
+if(window.PublicKeyCredential){document.getElementById('biometricLine').textContent='This device supports biometric login — enable it in Settings after you log in once.';}
+else {document.getElementById('biometricLine').textContent='Biometric login isn\'t supported on this device — use your password.';}
+
+/* ---------------- App boot ---------------- */
+let curPane='dash';
+function boot(){
+  const u=DB.users[session.email];
+  document.getElementById('auth').style.display='none';
+  document.getElementById('app').classList.add('on');
+  applyTheme(u.theme);
+  document.getElementById('miniAv').textContent=(u.display||u.name||'S')[0].toUpperCase();
+  document.getElementById('miniName').textContent=u.display||u.name;
+  document.getElementById('aiName').textContent='BunkBot';
+  document.getElementById('markDatePick').value=todayStr();
+  document.getElementById('bigAv').textContent=(u.display||u.name||'S')[0].toUpperCase();
+  loadProfileForm(); renderTimetable(); renderDashboard(); renderMark();
+  document.querySelectorAll('[data-th]').forEach(b=>b.classList.toggle('sel',b.dataset.th===(u.theme||'system')));
+  document.querySelectorAll('[data-lp]').forEach(b=>b.classList.toggle('sel',b.dataset.lp===(u.loginPref||'password')));
+  document.getElementById('bioSupportNote').textContent = window.PublicKeyCredential? 'Biometric hardware detected on this device.' : 'This device has no biometric hardware — password will be used regardless.';
+  document.getElementById('portalNetid').textContent=u.netid||'—';
+  document.getElementById('portalSim').innerHTML = u.subjects.map(s=>`<div class="period-row"><span class="pname">${s.name}</span><span class="ptime">portal: ${Math.floor(70+Math.random()*25)}% (mock)</span></div>`).join('');
+}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function applyTheme(t){document.documentElement.setAttribute('data-theme', t==='system'?'':(t||''));}
+function setTheme(t){const u=DB.users[session.email];u.theme=t;saveDB();applyTheme(t);document.querySelectorAll('[data-th]').forEach(b=>b.classList.toggle('sel',b.dataset.th===t));}
+function setLoginPref(p){
+  const u=DB.users[session.email];
+  if(p==='biometric'&&!window.PublicKeyCredential){alert('This device doesn\'t support biometrics — staying on password.');return;}
+  u.loginPref=p;saveDB();document.querySelectorAll('[data-lp]').forEach(b=>b.classList.toggle('sel',b.dataset.lp===p));
+}
+
+function goPane(p){curPane=p;document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.pane===p));document.querySelectorAll('.pane').forEach(el=>el.classList.remove('on'));document.getElementById('pane-'+p).classList.add('on');if(p==='dash')renderDashboard();if(p==='profile')refreshWebAttTable();}
+function goTab(t){document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));document.querySelectorAll('.subpane').forEach(el=>el.classList.remove('on'));document.getElementById('tab-'+t).classList.add('on');if(t==='pweb')refreshWebAttTable();}
+
+/* ---------------- Timetable ---------------- */
+function renderTimetable(){
+  const u=DB.users[session.email];
+  document.getElementById('ttTable').innerHTML = u.subjects.map(s=>`<tr><td>${s.code}</td><td>${s.name}</td><td>${s.perWeek}</td><td>${s.faculty||'—'}</td><td><span class="linklike" onclick="removeSubject('${s.code}')">Remove</span></td></tr>`).join('');
+}
+function removeSubject(code){
+  const u=DB.users[session.email];
+  u.subjects=u.subjects.filter(s=>s.code!==code);
+  Object.keys(u.week).forEach(d=>u.week[d]=u.week[d].filter(c=>c!==code));
+  saveDB(); renderTimetable(); renderDashboard(); renderMark();
+}
+function addSubject(){
+  const name=val('newSubName'), pw=parseInt(val('newSubPerWk')||'0');
+  if(!name||!pw){alert('Enter a subject name and periods/week.');return;}
+  const u=DB.users[session.email];
+  const code='X'+(u.subjects.length+1);
+  u.subjects.push({code,name,perWeek:pw,faculty:'Custom'});
+  saveDB(); renderTimetable();
+  document.getElementById('newSubName').value='';document.getElementById('newSubPerWk').value='';
+}
+
+/* ---------------- Mark attendance ---------------- */
+function weekdayName(dstr){const d=new Date(dstr+'T00:00:00');return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];}
+function renderMark(){
+  const u=DB.users[session.email];
+  const date=document.getElementById('markDatePick').value||todayStr();
+  document.getElementById('markDateLabel').textContent=date+' — '+weekdayName(date);
+  const day=weekdayName(date);
+  const codes=u.week[day]||[];
+  if(!u.attendance[date])u.attendance[date]={};
+  const list=document.getElementById('markList');
+  if(!codes.length){list.innerHTML='<p class="small-muted">No classes scheduled on this day.</p>';return;}
+  list.innerHTML=codes.map((code,i)=>{
+    const sub=u.subjects.find(s=>s.code===code); if(!sub)return '';
+    const key=code+'_'+i;
+    const status=u.attendance[date][key]||null;
+    return `<div class="period-row"><div><div class="pname">${sub.name}</div><div class="ptime">Period ${i+1} · Slot ${code}</div></div>
+    <div class="pill-row">
+      <button class="pill-btn ${status==='present'?'p':''}" onclick="markPeriod('${date}','${key}','present')">Present</button>
+      <button class="pill-btn ${status==='absent'?'a':''}" onclick="markPeriod('${date}','${key}','absent')">Absent</button>
+      <button class="pill-btn ${status==='od'?'o':''}" onclick="markPeriod('${date}','${key}','od')">OD</button>
+      <button class="pill-btn ${status==='medical'?'o':''}" onclick="markPeriod('${date}','${key}','medical')">Medical</button>
+    </div></div>`;
+  }).join('');
+}
+function markPeriod(date,key,status){
+  const u=DB.users[session.email];
+  if(!u.attendance[date])u.attendance[date]={};
+  u.attendance[date][key]=status;
+  saveDB(); renderMark(); renderDashboard();
+}
+
+/* ---------------- Stats engine ---------------- */
+function computeSubjectStats(u){
+  const codeCount={}; u.subjects.forEach(s=>codeCount[s.code]={attended:0,total:0,name:s.name,perWeek:s.perWeek});
+  Object.entries(u.attendance).forEach(([date,periods])=>{
+    Object.entries(periods).forEach(([key,status])=>{
+      const code=key.split('_')[0];
+      if(!codeCount[code])return;
+      if(status==='od'||status==='medical')return; // excluded
+      codeCount[code].total++;
+      if(status==='present')codeCount[code].attended++;
+    });
+  });
+  return codeCount;
+}
+function classesRemainingEstimate(u,code){
+  // rough estimate: count remaining weekday occurrences of this subject's code between today and semEnd
+  if(!u.semEnd)return 0;
+  const end=new Date(u.semEnd+'T00:00:00'); const start=new Date(); start.setHours(0,0,0,0);
+  let count=0; let d=new Date(start);
+  while(d<=end){
+    const day=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+    const dstr=d.toISOString().slice(0,10);
+    if(!u.holidays.includes(dstr) && u.week[day]){
+      count += u.week[day].filter(c=>c===code).length;
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return count;
+}
+function renderDashboard(){
+  const u=DB.users[session.email];
+  document.getElementById('dashSub').textContent=(u.display||u.name)+' · '+(u.college||u.uni||'your college');
+  const stats=computeSubjectStats(u);
+  let totalAtt=0,totalCls=0;
+  const alerts=[];
+  const rows=[];
+  Object.entries(stats).forEach(([code,s])=>{
+    totalAtt+=s.attended; totalCls+=s.total;
+    const pct = s.total? (s.attended/s.total*100):100;
+    const remaining=classesRemainingEstimate(u,code);
+    const bestCaseTotal=s.total+remaining, bestCaseAtt=s.attended+remaining;
+    const bestCasePct = bestCaseTotal? (bestCaseAtt/bestCaseTotal*100):100;
+    let status='ok',badge='b-ok',label='Safe';
+    if(s.total>0){
+      if(pct<75 && bestCasePct<75){status='irr';badge='b-danger';label='Irreversible Detention';}
+      else if(pct<75){status='det';badge='b-danger';label='Below 75% — Detention risk';}
+      else if(pct<80){status='warn';badge='b-warn';label='Near warning mark';}
+    }
+    if(status==='irr')alerts.push({t:'danger',msg:`${s.name}: even attending every remaining class can't reach 75%. Irreversible Detention alert.`});
+    else if(status==='det')alerts.push({t:'danger',msg:`${s.name}: at ${pct.toFixed(1)}%, below the 75% detention line. Attend upcoming classes to recover.`});
+    else if(status==='warn')alerts.push({t:'warn',msg:`${s.name}: at ${pct.toFixed(1)}%, close to the 75% mark — watch upcoming absences.`});
+    rows.push(`<tr><td>${s.name}</td><td>${s.attended}</td><td>${s.total}</td><td>${pct.toFixed(1)}%</td><td><span class="badge ${badge}">${label}</span></td></tr>`);
+  });
+  document.getElementById('subjTable').innerHTML=rows.join('')||'<tr><td colspan="5" class="small-muted">Mark some attendance to see stats.</td></tr>';
+  document.getElementById('alerts').innerHTML = alerts.length? alerts.map(a=>`<div class="alert ${a.t}">${a.t==='danger'?'⛔':'⚠️'} ${a.msg}</div>`).join('') : '<div class="alert info">✅ No attendance warnings right now.</div>';
+
+  const overallPct = totalCls? (totalAtt/totalCls*100):0;
+  document.getElementById('statCards').innerHTML=`
+    <div class="stat"><div class="n">${overallPct.toFixed(1)}%</div><div class="l">Overall attendance</div></div>
+    <div class="stat"><div class="n">${totalAtt}</div><div class="l">Classes attended</div></div>
+    <div class="stat"><div class="n">${totalCls}</div><div class="l">Classes logged</div></div>
+    <div class="stat"><div class="n">${u.holidays.length}</div><div class="l">Holidays marked</div></div>`;
+  drawChart(stats);
+}
+function refreshWebAttTable(){
+  const u=DB.users[session.email]; const stats=computeSubjectStats(u);
+  document.getElementById('webAttTable').innerHTML=Object.values(stats).map(s=>{
+    const pct=s.total?(s.attended/s.total*100):100;
+    return `<tr><td>${s.name}</td><td>${pct.toFixed(1)}%</td></tr>`;
+  }).join('')||'<tr><td colspan="2" class="small-muted">No data yet.</td></tr>';
+}
+function drawChart(stats){
+  const c=document.getElementById('chart'); const ctx=c.getContext('2d');
+  const dpr=window.devicePixelRatio||1; const w=c.clientWidth||300,h=140;
+  c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+  const items=Object.values(stats).filter(s=>s.total>0);
+  const cssvar=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  if(!items.length){ctx.fillStyle=cssvar('--muted');ctx.font='13px Inter';ctx.fillText('No attendance marked yet.',10,70);return;}
+  const bw=Math.min(46,(w-40)/items.length-14);
+  items.forEach((s,i)=>{
+    const pct=s.attended/s.total*100;
+    const x=20+i*((w-40)/items.length);
+    const barH=(pct/100)*95;
+    ctx.fillStyle = pct<75? cssvar('--danger') : pct<80? cssvar('--warn') : cssvar('--accent2');
+    ctx.fillRect(x,110-barH,bw,barH);
+    ctx.fillStyle=cssvar('--muted');ctx.font='10px Inter';
+    ctx.fillText(s.name.slice(0,8),x,124);
+    ctx.fillStyle=cssvar('--text');ctx.font='11px Inter';
+    ctx.fillText(pct.toFixed(0)+'%',x,110-barH-4);
+  });
+  ctx.strokeStyle=cssvar('--line'); ctx.beginPath();ctx.moveTo(0,110-0.75*95);ctx.lineTo(w,110-0.75*95);ctx.stroke();
+  ctx.fillStyle=cssvar('--danger');ctx.font='9px Inter';ctx.fillText('75% line',w-50,110-0.75*95-3);
+}
+
+/* ---------------- Profile ---------------- */
+function loadProfileForm(){
+  const u=DB.users[session.email];
+  document.getElementById('pf_name').value=u.name||'';
+  document.getElementById('pf_display').value=u.display||'';
+  document.getElementById('pf_reg').value=u.reg||'';
+  document.getElementById('pf_classsec').value=(u.cls||'')+' / '+(u.sec||'');
+  document.getElementById('pf_netid').value=u.netid||'';
+  document.getElementById('pf_netpass').value=u.netpass||'';
+  document.getElementById('pf_start').value=u.semStart||'';
+  document.getElementById('pf_end').value=u.semEnd||'';
+}
+function saveProfile(){
+  const u=DB.users[session.email];
+  const err=document.getElementById('pf_err'); err.textContent='';
+  if(hash(val('pf_confirm'))!==u.passHash){err.textContent='Password confirmation is incorrect.';return;}
+  u.name=val('pf_name'); u.display=val('pf_display')||u.name; u.reg=val('pf_reg');
+  const cs=val('pf_classsec').split('/'); u.cls=(cs[0]||'').trim(); u.sec=(cs[1]||'').trim();
+  u.netid=val('pf_netid'); u.netpass=val('pf_netpass');
+  u.semStart=val('pf_start'); u.semEnd=val('pf_end');
+  saveDB(); document.getElementById('pf_confirm').value='';
+  document.getElementById('miniName').textContent=u.display; document.getElementById('miniAv').textContent=u.display[0].toUpperCase();
+  document.getElementById('bigAv').textContent=u.display[0].toUpperCase();
+  renderDashboard();
+  err.style.color='var(--accent2)'; err.textContent='Saved.';
+}
+function deleteAccount(){
+  const u=DB.users[session.email];
+  const pw=prompt('Type your password to permanently delete this account:');
+  if(pw===null)return;
+  if(hash(pw)!==u.passHash){alert('Incorrect password. Account not deleted.');return;}
+  delete DB.users[session.email]; saveDB(); logout();
+}
+function reportAccount(){
+  const e=val('reportEmail');
+  document.getElementById('reportMsg').textContent = e? `"${e}" flagged for admin review (simulated).` : 'Enter an email to report.';
+}
+
+/* ---------------- BunkBot (rule-based, Tanglish-aware AI assistant) ---------------- */
+function toggleAI(){document.getElementById('aiPanel').classList.toggle('on');}
+function addMsg(text,who){const log=document.getElementById('aiLog');const d=document.createElement('div');d.className='msg '+who;d.textContent=text;log.appendChild(d);log.scrollTop=log.scrollHeight;}
+addMsg("Vanakkam! I'm BunkBot. Ask me things like 'If I take 3 days sick leave, will my Chemistry drop below 75%?' or 'enna pandra, my attendance eppadi irukku?'",'bot');
+
+function sendAI(){
+  const inp=document.getElementById('aiInput'); const q=inp.value.trim(); if(!q)return;
+  addMsg(q,'me'); inp.value='';
+  setTimeout(()=>addMsg(answerAI(q),'bot'),300);
+}
+function findSubject(u,q){
+  const ql=q.toLowerCase();
+  return u.subjects.find(s=>ql.includes(s.name.toLowerCase().split(' ')[0].toLowerCase()));
+}
+function answerAI(q){
+  const u=DB.users[session.email]; const stats=computeSubjectStats(u); const ql=q.toLowerCase();
+  if(/enna pandra|epdi|eppadi|hi|hello|vanakkam/.test(ql) && !/leave|absent|drop|percent|%/.test(ql)){
+    return `Naan nalla iruken, BunkBot here! Ask me about attendance, leave planning, or detention risk anytime.`;
+  }
+  const daysMatch = ql.match(/(\d+)\s*-?\s*day/);
+  const days = daysMatch? parseInt(daysMatch[1]) : (/tomorrow/.test(ql)?1:null);
+  const sub = findSubject(u,q);
+  if(days && sub){
+    const s=stats[sub.code]||{attended:0,total:0};
+    // estimate classes of this subject in next `days` calendar days
+    let extraClasses=0; let d=new Date(); 
+    for(let i=0;i<days;i++){
+      d.setDate(d.getDate()+1);
+      const day=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
+      extraClasses += (u.week[day]||[]).filter(c=>c===sub.code).length;
+    }
+    const newTotal=s.total+extraClasses, newAtt=s.attended;
+    const newPct = newTotal? (newAtt/newTotal*100):100;
+    const curPct = s.total? (s.attended/s.total*100):100;
+    if(!extraClasses) return `${sub.name} doesn't have a class in the next ${days} day(s) per your timetable, so a leave then won't move that percentage. (Tip: mark it as Medical leave if you're sick — it won't count against you at all.)`;
+    return `If those ${extraClasses} ${sub.name} period(s) over the next ${days} day(s) are marked Absent, your ${sub.name} attendance goes from ${curPct.toFixed(1)}% to about ${newPct.toFixed(1)}%${newPct<75?' — that would put you below the 75% detention line.':'. Still safe above 75%.'} If it's genuinely medical, mark it as Medical leave instead — it's excluded from the percentage entirely.`;
+  }
+  if(/detention|75/.test(ql)){
+    const risky=Object.values(stats).filter(s=>s.total>0 && (s.attended/s.total*100)<80);
+    if(!risky.length)return "You're clear of detention risk in every subject right now — nalla iruku!";
+    return "Watch these: "+risky.map(s=>`${s.name} (${(s.attended/s.total*100).toFixed(1)}%)`).join(', ')+".";
+  }
+  if(/overall|total attendance/.test(ql)){
+    let a=0,t=0;Object.values(stats).forEach(s=>{a+=s.attended;t+=s.total;});
+    return `Your overall attendance is ${t?((a/t*100).toFixed(1)):'0'}% (${a}/${t} classes).`;
+  }
+  return "I can work out leave impact ('3 day leave in Chemistry?'), detention risk, or your overall %. Try asking one of those — English or Tanglish, both work.";
+}
+
+/* boot if session exists */
+if(session && DB.users[session.email]) boot();
+</script>
+</body>
+</html>
